@@ -93,7 +93,7 @@ subscribeSTO = forever $ handleError (const $ return ()) $ do
             Constraints.monetaryPolicy (STO.policy stoData)
             <> credLookups
     mapError WithdrawTxError
-        $ submitTxConstraintsWith lookups constraints >>= awaitTxConfirmed . txId
+        $ submitTxConstraintsWith lookups (fmap (WithAssetClass Nothing) constraints) >>= awaitTxConfirmed . txId
 
 type UnlockExchangeSchema =
     BlockchainActions
