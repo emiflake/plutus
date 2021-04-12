@@ -19,10 +19,10 @@ A single non-recursive application of the beta rule.
 -}
 
 -- Local beta transformation
-beta'
+betaStep
     :: Term tyname name uni fun a
     -> Term tyname name uni fun a
-beta' = \case
+betaStep = \case
     Apply a (LamAbs _ name typ body) arg ->
         let varDecl  = VarDecl a name typ
             binding  = TermBind a Strict varDecl arg
@@ -34,4 +34,4 @@ beta' = \case
 beta
     :: Term tyname name uni fun a
     -> Term tyname name uni fun a
-beta t = beta' $ over termSubterms beta t
+beta t = betaStep $ over termSubterms beta t
