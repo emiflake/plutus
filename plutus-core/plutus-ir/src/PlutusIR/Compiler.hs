@@ -51,7 +51,7 @@ simplify = Beta.beta . Inline.inline . DeadCode.removeDeadBindings
 
 -- | Perform some simplification of a 'Term'.
 simplifyTerm :: Compiling m e uni fun a => Term TyName Name uni fun b -> m (Term TyName Name uni fun b)
-simplifyTerm = runIfOpts $ pure . (simplify . simplify . simplify . simplify)
+simplifyTerm = runIfOpts $ pure . simplify
 
 -- | Perform floating/merging of lets in a 'Term' to their nearest lambda/Lambda/letStrictNonValue.
 -- Note: It assumes globally unique names
