@@ -3,6 +3,7 @@
 {-# LANGUAGE DerivingVia           #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -16,6 +17,10 @@ import qualified Data.ByteArray                                     as BA
 import qualified Data.ByteString                                    as BS
 import qualified Data.ByteString.Lazy                               as BSL
 import           Data.Text.Prettyprint.Doc                          (Pretty)
+import           Data.Time.Clock                                    (UTCTime, diffUTCTime, getCurrentTime,
+                                                                     nominalDiffTimeToSeconds, secondsToNominalDiffTime)
+import           Data.Time.Units                                    (Second)
+import           Data.Time.Units.Extra                              ()
 
 import           GHC.Generics
 import           NoThunks.Class                                     (NoThunks)
@@ -31,7 +36,7 @@ import qualified Ouroboros.Network.Protocol.LocalTxSubmission.Codec as TxSubmiss
 import qualified Ouroboros.Network.Protocol.LocalTxSubmission.Type  as TxSubmission
 import           Ouroboros.Network.Util.ShowProxy
 
-import           Ledger                                             (Block, Tx (..), TxId (..))
+import           Ledger                                             (Block, Slot (..), Tx (..), TxId (..))
 import           Ledger.Bytes                                       (LedgerBytes (..))
 
 -- | Tip of the block chain type (used by node protocols).
@@ -113,3 +118,21 @@ codecTxSubmission =
     TxSubmission.codecLocalTxSubmission
       CBOR.encode CBOR.decode
       CBOR.encode CBOR.decode
+
+data SlotConfig =
+    SlotConfig
+        { scSlotLength   :: Second -- ^ Length of 1 slot
+        , scZeroSlotTime :: UTCTime -- ^ Beginning of the first slot
+        }
+    deriving (Show, Eq, Generic, FromJSON)
+
+-- | Convert a timestamp to a slot number
+slotNumber :: SlotConfig -> UTCTime -> Slot
+slotNumber SlotConfig{scSlotLength, scZeroSlotTime} currentTime =
+    let timePassed = currentTime `diffUTCTime` scZeroSlotTime
+        slotsPassed = timePassed / (secondsToNominalDiffTime $ fromIntegral scSlotLength)
+    in Slot $ round $ nominalDiffTimeToSeconds slotsPassed
+
+-- | Get the current slot number
+currentSlot :: SlotConfig -> IO Slot
+currentSlot sc = slotNumber sc <$> getCurrentTime

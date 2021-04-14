@@ -193,7 +193,8 @@ library
         iohk-monitoring -any,
         lobemo-backend-ekg -any,
         exceptions -any,
-        data-default -any
+        data-default -any,
+        time -any
 
 executable plutus-pab
     main-is: Main.hs
